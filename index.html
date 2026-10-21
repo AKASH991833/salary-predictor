@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salary Insight - ML Salary Predictor</title>
+<meta name="description" content="Predict tech salaries with a multivariate regression model trained live in your browser. Confidence ranges, feature importance, and what-if analysis.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d9488">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="design.css">
+<style>
+.grid{display:grid;grid-template-columns:400px 1fr;gap:22px;align-items:start}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.slider-row{display:flex;align-items:center;gap:14px}
+.slider-row output{font-weight:800;font-size:16px;min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+input[type=range]{flex:1;appearance:none;height:6px;border-radius:99px;background:var(--surface2);outline:none}
+input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));border:3px solid var(--surface);box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:7px 13px;border-radius:99px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--ink)}
+.chip.on{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+.hero-num{font-size:clamp(40px,6vw,58px);font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums;
+  background:linear-gradient(120deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.range-pill{display:inline-flex;gap:6px;align-items:center;margin-top:12px;padding:8px 14px;border-radius:99px;background:var(--surface2);font-size:13.5px;font-weight:600;color:var(--muted)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:18px}
+.stat{background:var(--surface2);border-radius:12px;padding:12px 14px}
+.stat b{display:block;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat span{font-size:12px;color:var(--muted);font-weight:600}
+.imp-row{display:grid;grid-template-columns:110px 1fr 52px;gap:10px;align-items:center;margin-bottom:9px;font-size:13px}
+.imp-bar{height:9px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.imp-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.imp-val{text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+canvas.chart{width:100%;height:230px;display:block}
+.sect{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.stack{display:grid;gap:22px}
+.limit-card{border-left:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface));font-size:13.5px;color:var(--muted)}
+.limit-card b{color:var(--ink)}
+.delta{font-weight:800;font-variant-numeric:tabular-nums}
+.delta.up{color:#16a34a}
+@media(max-width:560px){.hero-num{font-size:42px}.imp-row{grid-template-columns:86px 1fr 46px}}
+</style>
+</head>
+<body>
+<nav class="topnav">
+  <div class="brand"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="6" fill="url(#g)"/><path d="M7 15.5l3.4-4.2 2.8 2.4L17 9" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><defs><linearGradient id="g" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#0d9488"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs></svg>&nbsp;Salary Insight</div>
+  <span class="sp"></span>
+  <button id="btn-install" class="icon-btn" hidden title="Install app">⤓</button>
+  <button id="btn-theme" class="icon-btn" title="Toggle theme">☾</button>
+</nav>
+<main class="page">
+  <header class="page-head">
+    <h1>What should you <em>really</em> be paid?</h1>
+    <p>A multivariate regression model trains live in your browser on 600 role-based salary profiles and predicts compensation with confidence ranges, feature importance, and what-if analysis.</p>
+  </header>
+  <div class="grid">
+    <section class="card"><div class="card-body">
+      <h2 class="sect">Your profile</h2>
+      <div class="field"><label for="role">Role</label>
+        <select id="role" class="input">
+          <option value="frontend">Frontend Developer</option>
+          <option value="backend">Backend Developer</option>
+          <option value="fullstack" selected>Full-Stack Developer</option>
+          <option value="data">Data Scientist</option>
+          <option value="ml">ML Engineer</option>
+          <option value="devops">DevOps Engineer</option>
+          <option value="mobile">Mobile Developer</option>
+          <option value="pm">Product Manager</option>
+        </select></div>
+      <div class="field"><label for="edu">Education</label>
+        <select id="edu" class="input">
+          <option value="0">Self-taught / Bootcamp</option>
+          <option value="1" selected>Bachelor's degree</option>
+          <option value="2">Master's degree</option>
+          <option value="3">PhD</option>
+        </select></div>
+      <div class="field"><label for="exp">Experience</label>
+        <div class="slider-row"><input type="range" id="exp" min="0" max="20" step="0.5" value="4"><output id="expOut">4 yrs</output></div></div>
+      <div class="field"><label for="loc">Location market</label>
+        <select id="loc" class="input">
+          <option value="0">Tier 3 / remote-low</option>
+          <option value="1">Tier 2 city</option>
+          <option value="2" selected>Tier 1 metro</option>
+          <option value="3">Global hub (SF / NYC / London)</option>
+        </select></div>
+      <div class="field"><label for="size">Company size</label>
+        <select id="size" class="input">
+          <option value="0">Startup (1-50)</option>
+          <option value="1" selected>Growth (51-500)</option>
+          <option value="2">Enterprise (500+)</option>
+        </select></div>
+      <div class="field"><label>Skills</label>
+        <div class="chips" id="skills"></div></div>
+      <button class="btn primary" id="predict" style="width:100%;justify-content:center;margin-top:6px">Predict salary</button>
+    </div></section>
+    <div class="stack">
+      <section class="card"><div class="card-body">
+        <h2 class="sect">Prediction</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between">
+          <div><div class="hero-num" id="salary">$&ndash;</div>
+            <div class="range-pill">Likely range <b id="range" style="color:var(--ink)">&ndash;</b></div></div>
+          <div style="text-align:right"><div style="font-size:12.5px;color:var(--muted);font-weight:600">vs. median for your role</div>
+            <div class="delta" id="delta">&ndash;</div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><b id="st-r2">&ndash;</b><span>Model R&sup2;</span></div>
+          <div class="stat"><b id="st-mae">&ndash;</b><span>Mean abs. error</span></div>
+          <div class="stat"><b id="st-n">&ndash;</b><span>Training profiles</span></div>
+          <div class="stat"><b id="st-ms">&ndash;</b><span>Train time</span></div>
+        </div>
+      </div></section>
+      <section class="card"><div class="card-body">
+        <h2 class="sect">Market scatter - experience vs salary</h2>
+        <canvas class="chart" id="chart" height="230"></canvas>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px">Gray dots are training profiles for the selected role. The highlighted point is you; the curve is the fitted model.</p>
+      </div></section>
+      <section class="card"><div class="card-body">
+        <h2 class="sect">What drives this number</h2>
+        <div id="imp"></div>
+      </div></section>
+      <section class="card"><div class="card-body">
+        <h2 class="sect">What-if: +2 years of experience</h2>
+        <p style="font-size:14px;color:var(--muted)">Two more years at your current trajectory would move the prediction to <b class="delta up" id="whatif">&ndash;</b>.</p>
+      </div></section>
+      <section class="card limit-card"><div class="card-body">
+        <b>Honest limits.</b> This is a demonstration model trained on a synthetic dataset generated from realistic tech-salary patterns - not a live market survey. It shows how regression modeling works end-to-end in the browser. For real compensation decisions, cross-check with survey sources like Levels.fyi, Glassdoor, or Hired.
+      </div></section>
+    </div>
+  </div>
+</main>
+<script src="core.js"></script>
+<script src="app.js"></script>
+<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')</script>
+</body>
+</html>
