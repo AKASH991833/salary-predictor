@@ -1,0 +1,8 @@
+{
+  "accuracy": 0.862,
+  "roc_auc": 0.926,
+  "n_rows": 30162,
+  "n_test": 6033,
+  "dataset": "UCI Adult (1994 US census extract)",
+  "target": "P(annual income > $50K)"
+}

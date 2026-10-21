@@ -31,3 +31,19 @@ This is a demonstration model trained on a **synthetic dataset** built from real
 ## Run locally
 
 Open `index.html`, or serve the folder (`python3 -m http.server`) and visit `http://localhost:8000`.
+
+---
+
+## 🐍 Python version (real ML backend) - `python-app/`
+
+The browser demo above is fully client-side. This folder is the **pro-grade version** with a real training pipeline on real data:
+
+Predicts P(income > $50K) from census profile (UCI Adult, 30k records). 86.2% accuracy, AUC 0.93. Stack: Python, Streamlit, XGBoost.
+
+```bash
+cd python-app
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+Deploy free on **Hugging Face Spaces** (no card): create a Space, upload the `python-app/` folder - it ships Space-ready (`sdk` + `app_file` already set in its README). Retrain anytime with `python train.py` (where present).
